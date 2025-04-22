@@ -1,0 +1,98 @@
+// A basic React-based canteen website with ordering, payment via UPI, and QR code generation.
+// Note: UPI payment and QR-scanning-to-print-bill features will require back-end integrations and hardware APIs.
+// For now, we simulate this with UI elements.
+
+import React, { useState } from 'react';
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { motion } from "framer-motion";
+import QRCode from "react-qr-code";
+
+const menu = [
+  { category: 'Drinks', items: [
+    { name: 'Lemon Juice', price: 30, img: 'https://example.com/lemon.jpg' },
+    { name: 'Watermelon Juice', price: 45, img: 'https://example.com/watermelon.jpg' },
+    { name: 'Rose Milk', price: 50, img: 'https://example.com/rosemilk.jpg' },
+  ]},
+  { category: 'Meals', items: [
+    { name: 'Fried Rice', price: 130, img: 'https://example.com/friedrice.jpg' },
+    { name: 'Chicken Fried Rice', price: 130, img: 'https://example.com/chickenfriedrice.jpg' },
+    { name: 'Egg Fried Rice', price: 130, img: 'https://example.com/eggfriedrice.jpg' },
+    { name: 'Noodles', price: 130, img: 'https://example.com/noodles.jpg' },
+  ]}
+];
+
+export default function CanteenOrderPage() {
+  const [order, setOrder] = useState([]);
+  const [showQR, setShowQR] = useState(false);
+
+  const addToOrder = (item) => {
+    setOrder([...order, item]);
+  };
+
+  const removeFromOrder = (indexToRemove) => {
+    setOrder(order.filter((_, index) => index !== indexToRemove));
+  };
+
+  const total = order.reduce((sum, item) => sum + item.price, 0);
+
+  const handlePayment = () => {
+    setShowQR(true);
+  };
+
+  const upiID = "roshansj42@oksbi";
+  const upiString = `upi://pay?pa=${upiID}&pn=College%20Canteen&am=${total}&cu=INR`;
+  const billDetails = order.map(item => `${item.name} - ₹${item.price}`).join("\n") + `\nTotal: ₹${total}`;
+
+  return (
+    <div className="p-4 grid gap-4">
+      <h1 className="text-3xl font-bold text-center">College Canteen</h1>
+      {menu.map(section => (
+        <div key={section.category}>
+          <h2 className="text-xl font-semibold mt-4">{section.category}</h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mt-2">
+            {section.items.map(item => (
+              <Card key={item.name}>
+                <CardContent className="p-4">
+                  <img src={item.img} alt={item.name} className="rounded-xl w-full h-40 object-cover mb-2" />
+                  <h3 className="text-lg font-medium">{item.name}</h3>
+                  <p className="text-sm">₹{item.price}</p>
+                  <Button onClick={() => addToOrder(item)} className="mt-2 w-full">Add</Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      ))}
+
+      {order.length > 0 && (
+        <div className="mt-6 p-4 border rounded-xl bg-white shadow-md">
+          <h3 className="text-xl font-bold mb-2">Your Order</h3>
+          <ul>
+            {order.map((item, index) => (
+              <li key={index} className="flex justify-between items-center py-1">
+                <span>{item.name} - ₹{item.price}</span>
+                <Button variant="outline" size="sm" onClick={() => removeFromOrder(index)}>Remove</Button>
+              </li>
+            ))}
+          </ul>
+          <p className="font-semibold mt-2">Total: ₹{total}</p>
+          <Button className="mt-4" onClick={handlePayment}>Pay via UPI</Button>
+        </div>
+      )}
+
+      {showQR && (
+        <div className="mt-6 p-4 border rounded-xl bg-green-100 text-center">
+          <h3 className="text-lg font-bold">Scan to Pay via UPI</h3>
+          <p className="text-sm mb-2">Send payment to <strong>{upiID}</strong></p>
+          <QRCode value={upiString} size={180} />
+          <p className="text-xs mt-2">After payment, show this QR at the counter to print your bill.</p>
+          <div className="mt-4 text-left text-sm bg-white p-2 rounded-xl shadow-inner">
+            <pre>{billDetails}</pre>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
